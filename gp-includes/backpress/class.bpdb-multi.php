@@ -9,7 +9,7 @@ require( BACKPRESS_PATH . 'class.bpdb.php' );
 
 class BPDB_Multi extends BPDB {
 	/**
-	 * Associative array (dbhname => dbh) for established mysql connections
+	 * Associative array (dbhname => dbh) for established mysqli connections
 	 * @var array
 	 */
         var $dbhs = array();
@@ -18,8 +18,6 @@ class BPDB_Multi extends BPDB {
 	var $last_table = '';
 	var $db_tables = array();
 	var $db_servers = array();
-
-	// function BPDB_Multi() {} // Not used - rely on PHP4 constructor from BPDB to call BPDB_Multi::__construct
 
 	function __construct() {
 		$args = func_get_args();
@@ -34,7 +32,7 @@ class BPDB_Multi extends BPDB {
 	/**
 	 * Figure out which database server should handle the query, and connect to it.
 	 * @param string query
-	 * @return resource mysql database connection
+	 * @return resource mysqli database connection
 	 */
 	function &db_connect( $query = '' ) {
 		$false = false;
@@ -57,12 +55,12 @@ class BPDB_Multi extends BPDB {
 		if ( !isset($this->db_servers[$dbhname]) )
 			return $false;
 
-		if ( isset($this->dbhs[$dbhname]) && is_resource($this->dbhs[$dbhname]) ) // We're already connected!
+		if ( isset($this->dbhs[$dbhname]) && $this->dbhs[$dbhname] instanceof mysqli ) // We're already connected!
 			return $this->dbhs[$dbhname];
 		
 		$success = $this->db_connect_host( $this->db_servers[$dbhname] );
 
-		if ( $success && is_resource($this->dbh) ) {
+		if ( $success && $this->dbh instanceof mysqli ) {
 			$this->dbhs[$dbhname] =& $this->dbh;
 		} else {
 			unset($this->dbhs[$dbhname]);
@@ -132,7 +130,7 @@ class BPDB_Multi extends BPDB {
 		if ( preg_match('/^\s*SELECT.*?\s+FOUND_ROWS\(\)/is', $q) )
 			return $this->last_table;
 
-		// Big pattern for the rest of the table-related queries in MySQL 5.0
+		// Big pattern for the rest of the table-related queries in MySQLi 5.0
 		if ( preg_match('/^\s*(?:'
 				. '(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM'
 				. '|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?'
